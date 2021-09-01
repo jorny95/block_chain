@@ -1,0 +1,11 @@
+{
+  "name": "jihyun",
+  "version": "1.0.0",
+  "description": "연결 (P2P)\r - 네트워크 (http socket)\r - 데이터를 저장하는 코드(블록)\r     - Hash sha256 JWT\r     - 단방향 암호화 -> 자리수 고정 a -> 64암호화\r                                  abc -> 64\r     - Merkle (데이터 연결을 쉽게 찾기 위해서 쓰는 도구)\r     - 작업증명 (pow)\r         마이닝 채굴...",
+  "main": "block.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
