@@ -116,7 +116,6 @@ function addBlock(data){
 
 /* etc
 1: 타입검사
-2: 
 */
 
 function isValidNewBlock(currentBlock, previousBlock){
