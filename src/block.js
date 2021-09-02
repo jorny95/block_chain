@@ -66,8 +66,66 @@ function createGenesisBlock(){
 // const block = [createGenesisBlock()]
 // console.log(block)
 
-function addBlock(){
+//다음블럭의 Header와 Body를 만들어주는 함수
+function nextBlock(data){
+    // header 
+    const preBlock = getLastBlock()
+    const version = getVersion()
+    const index = preBlock.header.index + 1
+    const previousHash = createHash(preBlock)
+    /*
+        이전 해쉬값
+        previousHash=SHA256(version + index + previousHash + timestamp + merkleRoot)
+    */
+    const time = getCurrentTime()
+
+    const merkleTree = merkle("sha256").sync(data)
+    const merkleRoot = merkleTree.root() || '0'.repeat(64)
+    
+    const header = new BlockHeader(version,index,previousHash,time,merkleRoot)
+    return new Block(header,data)
+}
+
+function createHash(block){
+    const {
+        version,
+        index,
+        previousHash,
+        time,
+        merkleRoot
+    } = block.header
+    const blockString = version + index + previousHash + time + merkleRoot
+    const Hash = CryptoJs.SHA256(blockString).toString()
+    return Hash
+}
+
+function addBlock(data){
     //new header -> new block (header, body)
+    //block 조건
+    //push 하기 전에 검증
+
+    const newBlock = nextBlock(data)
+
+
+    if(isValidNewBlock(newBlock, getLastBlock())) {
+        Blocks.push(newBlock); 
+        return true;
+    } 
+    return false;
+}
+
+/* etc
+1: 타입검사
+2: 
+*/
+
+function isValidNewBlock(currentBlock, previousBlock){
+    isValidType(currentBlock)
+    return true
+}
+
+function isValidType(block){
+    console.log(block)
 }
 
 function getVersion(){
@@ -86,5 +144,7 @@ function getCurrentTime(){
     return Math.ceil(new Date().getTime()/1000)
 }
 
-
+addBlock(["hello1"])
+addBlock(["hello2"])
+addBlock(["hello3"])
 console.log(Blocks)
