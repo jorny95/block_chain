@@ -21,11 +21,13 @@ app.get("/version",(req,res)=>{
 // JSON형태로 데이터를 넘겨주는게 베스트
 // -H "Content-Type:application/json"
 // -d : data의 약자, body내용 , -d "{\"data\":[\"Hello world!\"]}"
+// curl -X POST -H "Content-Type:application/json" -d "{\"data\":[\"Hello world\"]}" http://localhost:3000/mineBlock 
 app.post("/mineBlock",(req,res)=>{
     const data = req.body.data
-    const result = bc.addBlock(data)
+    const result = bc.mineBlock(data)
     if(result == false ) {
         res.send(`mineBlock failed`)
+        res.status(400).send('블럭추가에 오류가 발생되었습니다')
     } else {
         res.send(result)
     }
@@ -43,7 +45,7 @@ app.get("/peers",(req,res)=>{
 })
 // addPeers -> 내가 보낼 주소값에 소켓을 생성하는 작업 connectionToPeers POST
 //[]
-// curl -X POST -H "Content-Type:application/json" -d "{\"peers\":[\"ws://localhost:7001\",\"ws://localhost:7002\"]}" http://localhost:3000/addPeers
+// curl -X POST -H "Content-Type:application/json" -d "{\"peers\":[\"ws://localhost:6006\"]}" http://localhost:3000/addPeers
 app.post("/addPeers",(req,res)=>{
     const peers = req.body.peers
     ws.connectionToPeers(peers)

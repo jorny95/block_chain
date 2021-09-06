@@ -1,6 +1,7 @@
 const fs = require('fs')
 const merkle = require('merkle')
 const CryptoJs = require('crypto-js')
+const random = require('random')
 
 /* 사용법 */
 //const tree = merkle("sha256").sync([]) //배열을 넣어야함, 배열 안에 객체 넣는 것 가능, tree구조로 만들어줌
@@ -50,9 +51,9 @@ function getLastBlock() {
 function createGenesisBlock(){
     // 1. header만들기
     // 5개의 인자값을 만들어야됨
-    const version = getVersion() //1.0.0
+    const version = "1.0.0" //1.0.0
     const index = 0
-    const time = getCurrentTime()
+    const time = 1630907567  //하드코딩
     const previousHash = '0'.repeat(64)
     const body = ['hello block']
 
@@ -99,13 +100,10 @@ function createHash(block){
     return Hash
 }
 // Blocks push 1번
-function addBlock(data){
+function addBlock(newBlock){ //블럭이 성공적으로 넣어지는 시점을 잡는 것
     //new header -> new block (header, body)
     //block 조건
     //push 하기 전에 검증
-
-    const newBlock = nextBlock(data)
-
 
     if(isValidNewBlock(newBlock, getLastBlock())) {
         Blocks.push(newBlock); 
@@ -114,6 +112,18 @@ function addBlock(data){
     } 
     return false;
 }
+
+function mineBlock(blockData){
+    const newBlock = nextBlock(blockData) //object block {header, body}
+    if(addBlock(newBlock)){
+        const nw = require('./network')
+        nw.broadcast(nw.responseLastMsg())
+        return newBlock
+    } else {
+        return null
+    }
+}
+
 
 /* etc
 1: 타입검사
@@ -171,6 +181,24 @@ function isValidType(block){
 
 }
 
+function replaceBlock(newBlocks) {
+    // newBlocks : 내가 받은 전체 배열 => 내가 받은 전체 블록들
+    // Blocks = newBlocks
+    // 1. newBlocks내용을 검증
+    // 2. 검증을 한번만 하지 않는다. 랜덤하게 한번만 할 수 있고, 두번할수도 있고, 세번할수도 있게 합니다. => 조건문에 랜덤 사용
+    // 3. Blocks = newBlocks
+    // 4. broadcast 날립니다. 
+
+    if (isValidBlock(newBlocks) && newBlocks.length > Blocks.length && random.boolean()) {
+        console.log(`Blocks 배열을 newBlocks로 교체합니다.`)
+        const nw = require('./network')
+        Blocks = newBlocks
+        nw.broadcast(nw.responseLastMsg())
+    } else {
+        console.log(`메세지로부터 받은 블록배열이 맞지 않습니다.`)
+    }
+}
+
 function getVersion(){
     const {version} = JSON.parse(fs.readFileSync("../package.json"))
     //console.log(version)
@@ -186,10 +214,6 @@ function getCurrentTime(){
     //console.log( Math.ceil(new Date().getTime()/1000) )
     return Math.ceil(new Date().getTime()/1000)
 }
-
-addBlock(["hello1"])
-addBlock(["hello2"])
-addBlock(["hello3"])
 
 /*
     일단 제네시스 블럭이 유효한지, 데이터가 바뀐적이 없는지
@@ -221,6 +245,9 @@ module.exports = {
     getLastBlock,
     addBlock,
     getVersion,
+    replaceBlock,
+    mineBlock,
+    createHash
 }
 
 /*
