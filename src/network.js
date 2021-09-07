@@ -10,7 +10,7 @@ const bc = require('./block')
 let sockets = []
 
 function getSockets(){
-    return sockets
+    return socket
 }
 
 const MessageAction = {
@@ -18,7 +18,13 @@ const MessageAction = {
     QUERY_ALL:1, // 내가 가지고 있는 블록의 노드들을 다 처리하는 공간
     RESPONSE_BLOCK:2, //실질적으로 블록을 추가할지말지 결정하는 메서드
 }
-
+/*
+    open
+    connection
+    error 
+    close
+    message
+*/
 //reducer 만들겁니다.
 function initMessageHandler(ws){
     ws.on("message",data=>{
@@ -104,8 +110,8 @@ function handleBlockResponse(message){
 //최초의 접속
 
 function initErrorHandler(ws){
-    ws.on("close",()=>{closeConnection(ws)})
-    ws.on("error",()=>{closeConnection(ws)})
+    ws.on("close",()=>{closeConnection(ws)}) //close라는 이벤트가 발생했을때 함수를 발동
+    ws.on("error",()=>{closeConnection(ws)}) //error가 나면 함수를 발동
 }
 
 function closeConnection(ws){

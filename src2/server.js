@@ -1,82 +1,93 @@
-const express = require('express')
-const bc = require('./block')
-const ws = require('./network')
-const app = express()
-const bodyParser = require('body-parser')
-const port = process.env.PORT || 3001
-
-app.use(bodyParser.json())
-
-// curl http://localhost:3000/blocks | python3 -m json.tool
-app.get("/blocks",(req,res)=>{
-    res.send(bc.getBlocks())
-})
-
-app.get("/version",(req,res)=>{
-    res.send(bc.getVersion())
-})
-
-// Blocks 배열에 {} 추가하는게 목적
-// curl => 앞으로 http통신을 할것이다
-// -X [request method]: -X GET, -X POST, -X PUT
-// JSON형태로 데이터를 넘겨주는게 베스트
-// -H "Content-Type:application/json"
-// -d : data의 약자, body내용 , -d "{\"data\":[\"Hello world!\"]}"
-app.post("/mineBlock",(req,res)=>{
-    const data = req.body.data
-    const result = bc.mineBlock(data)
-    if(result == false ) {
-        res.send(`mineBlock failed`)
-        res.status(400).send('블럭추가에 오류가 발생되었습니다')
-    } else {
-        res.send(result)
-    }
-})
-
-//express 클라이언트 
-//websocket 서버
-
-// peers -> 현재 가지고 있는 소켓리스트 getSockets GET
-// curl http://localhost:3000/peers
-app.get("/peers",(req,res)=>{
-    res.send(ws.getSockets().map( socket => {
-        return `${socket._socket.remoteAddress}:${socket._socket.remotePort}`;
-    }))
-})
-// addPeers -> 내가 보낼 주소값에 소켓을 생성하는 작업 connectionToPeers POST
-//[]
-// curl -X POST -H "Content-Type:application/json" -d "{\"peers\":[\"ws://localhost:6006\"]}" http://localhost:3000/addPeers
-app.post("/addPeers",(req,res)=>{
-    const peers = req.body.peers
-    ws.connectionToPeers(peers)
-    res.send('success')
-})
-
-//curl http://localhost:3000/stop
-app.get("/stop",(req,res)=>{
-    res.send("server stop")
-    process.exit(0)
-})
-
-ws.wsInit()
-app.listen(port, ()=>{
-    console.log(`server start posrt ${port}`)
-})
+// 내용을 전달해주는것이 주 목적이기에 핵심적인 아이는 ws
+// 내가 갖고있는 결과물을 보내주는 아이
 
 /*
+    프로토콜(데이터 통신 방법의 종류) => http://  localhost:3000
+    http는 요청을 보내면 문서가 만들어진다
+    
+    문서의 형태
+    
+    start line
+    header
+    body
 
-블록 가져오기
-간단한 기록들 버전
-중단
-
-peer 
-
-*** 윈도우
-set 변수명=값
-set 변수명
-
-*** mac or linux
-export 변수명=값
-env | grep 변수명
-
+    프로토콜 => ws://    localhost:3001
 */
+
+
+const { listenerCount } = require('ws');
+const WebSocket = require('ws');
+
+// 내 자신을 WS서버로 만들겠다.
+
+let sockets = []
+function wsInit() {
+    const server = new WebSocket.Server({ port:6005 })
+    console.log(1)
+    server.on("connection",(ws)=>{
+        init(ws)
+        //ws.on("message",()=>{})
+        //ws.send("text~~")
+
+        // console.log(2)
+        // ws.on("message", (message)=>{
+        //     console.log(3)
+        //     console.log(`received: ${message}`);
+        // });
+
+        // ws.send('jihyun'); //내가 보낼 내용을 send 메서드 안에 담음
+        // console.log(4)
+    })
+}
+
+function init(ws){
+    sockets.push(ws)
+    initMessageHandler(ws)
+    initErrorHandler(ws)
+} 
+
+function initErrorHandler(ws){
+    ws.on("close",()=>CloseConnection(ws))
+    ws.on("error",()=>CloseConnection(ws))
+}
+
+function CloseConnection(ws){
+    console.log(`Connection Close ${ws}`)
+    sockets.splice(sockets.indexOf(ws), 1)
+}
+
+const MessageAction = {
+    QUERY_LAST:0,
+    QUERY_ALL:1,
+    RESPONSE_BLOCK:2
+}
+
+function initMessageHandler(ws){
+    ws.on("message", (data)=>{
+        const message = JSON.parse(data)
+        //{type: 'msg', data: '안녕하세요'}
+        switch(message.type){
+            case MessageAction.QUERY_LAST:
+                console.log(message.data)
+                console.log("msg를 출력한다")
+            break;
+            case MessageAction.QUERY_ALL:
+                console.log(message.data)
+                console.log("msg를 출력한다")
+            break;
+            case MessageAction.RESPONSE_BLOCK:
+                handleBlockResponse()
+            break;
+        }
+    })
+}
+
+function handleBlockResponse(){
+
+}
+
+wsInit()
+
+module.exports = {
+    wsInit
+}

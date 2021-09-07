@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button id="btn"></button>
+    <script type="text/javascript">
+
+        let bt = document.querySelector("#btn")
+
+        bt.addEventListener("click",()=>{
+            alert("hello world!")
+        })
+
+        let result = 0
+        let callback = (number,cb) => {
+            //javascript 싱글스레드 => 기찻길 하나
+            //setTimeout => 비동기
+
+            setTimeout(()=>{
+                let sum = 0;
+                for (let i=0; i<number; i++){
+                    sum += i
+                }
+                cb(sum)
+                result = sum
+            },1000)
+        }
+        
+        function hell(num){
+            console.log(`오늘 수업시간은 ${num}시간입니다.`)
+        }
+
+        callback(10,hell)
+
+        console.log('변수 :',result)
+    </script>
+</body>
+</html>
