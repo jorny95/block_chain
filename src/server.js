@@ -45,7 +45,8 @@ app.get("/peers",(req,res)=>{
 })
 // addPeers -> 내가 보낼 주소값에 소켓을 생성하는 작업 connectionToPeers POST
 //[]
-// curl -X POST -H "Content-Type:application/json" -d "{\"peers\":[\"ws://localhost:6006\"]}" http://localhost:3000/addPeers
+// curl -X POST -H "Content-Type:application/json" -d "{\"peers\":[\"ws://192.168.0.43:6005\"]}" http://localhost:3000/addPeers
+//192.168.0.43:6005
 app.post("/addPeers",(req,res)=>{
     const peers = req.body.peers
     ws.connectionToPeers(peers)
@@ -60,7 +61,7 @@ app.get("/stop",(req,res)=>{
 
 ws.wsInit()
 app.listen(port, ()=>{
-    console.log(`server start posrt ${port}`)
+    console.log(`server start port ${port}`)
 })
 
 /*

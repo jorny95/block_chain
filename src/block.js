@@ -2,18 +2,26 @@ const fs = require('fs')
 const merkle = require('merkle')
 const CryptoJs = require('crypto-js')
 const random = require('random')
+const {hexToBinary} = require('./util')
 
 /* 사용법 */
 //const tree = merkle("sha256").sync([]) //배열을 넣어야함, 배열 안에 객체 넣는 것 가능, tree구조로 만들어줌
 //tree.root()
 
+const BLOCK_GENERATION_INTERVAL = 10 //초
+const BLOCK_ADJUSTMENT_INTERVAL = 10 //블록이 10개가 넘을때마다 난이도를 변경시키는 것
+
 class BlockHeader {
-    constructor( version, index, previousHash, time, merkleRoot ){
+    constructor( version, index, previousHash, time, merkleRoot, difficulty, nonce ){
         this.version = version // 1 {version:1}
         this.index = index // 2 {version:1, index:2} // 포인트!
         this.previousHash = previousHash // 마지막 블록을 가져올 수 있어야함 -> 그 블록에서 header의 정보만 들고 올줄 알아야함 -> 전부 다 string으로 연결할 줄 알아야함 -> 그것을 SHA256으로 변환할줄 알아야함
         this.time = time
         this.merkleRoot = merkleRoot
+
+        this.difficulty = difficulty // 난이도
+        this.nonce = nonce // 몇번 시도했는지?
+
     }
 }
 
@@ -60,7 +68,10 @@ function createGenesisBlock(){
     const tree = merkle('sha256').sync(body)
     const root = tree.root() || '0'.repeat(64)
 
-    const header = new BlockHeader(version,index,previousHash,time,root)
+    const difficulty = 0
+    const nonce = 0
+
+    const header = new BlockHeader(version,index,previousHash,time,root,difficulty,nonce)
     return new Block(header,body)
 }
 
@@ -79,12 +90,68 @@ function nextBlock(data){
         previousHash=SHA256(version + index + previousHash + timestamp + merkleRoot)
     */
     const time = getCurrentTime()
+    const difficulty = getDifficulty(getBlocks()) // <- 함수를 만들어서
 
     const merkleTree = merkle("sha256").sync(data)
     const merkleRoot = merkleTree.root() || '0'.repeat(64)
     
-    const header = new BlockHeader(version,index,previousHash,time,merkleRoot)
+    const header = findBlock(version,index,previousHash,time,merkleRoot,difficulty)
     return new Block(header,data)
+}
+
+function getDifficulty(blocks){
+    // 시간 
+    const lastBlock = blocks[blocks.length-1]
+    if(lastBlock.header.index % BLOCK_ADJUSTMENT_INTERVAL === 0
+        && lastBlock.header.index != 0
+        ) {
+        //난이도를 조정하는 코드
+        return getAdjustedDifficulty(lastBlock,blocks)
+    }
+    return lastBlock.header.difficulty
+}
+
+function getAdjustedDifficulty(lastBlock,blocks){
+    // block 10단위로 끊는다.
+    // 게시판의 페이징처럼 이전의 값
+    // lastblock 난이도
+    const prevAdjustmentBlock = blocks[blocks.length - BLOCK_ADJUSTMENT_INTERVAL]
+    const timeToken = lastBlock.header.time - prevAdjustmentBlock.header.time
+    const timeExpected = BLOCK_ADJUSTMENT_INTERVAL * BLOCK_GENERATION_INTERVAL
+
+    if(timeToken < timeExpected/2){
+        return prevAdjustmentBlock.header.difficulty + 1
+    } else if (timeToken > timeExpected * 2) {
+        return prevAdjustmentBlock.header.difficulty -1
+    } else {
+        return prevAdjustmentBlock.header.difficulty
+    }
+}
+
+function findBlock(version,index,previousHash,time,merkleRoot,difficulty){
+    let nonce = 0
+    while(true){
+        // 이 상태에서는 BLOCK이 없어요
+        // 이곳에서 createHeaderHash함수 호출 할 예정
+        let hash = createHeaderHash(version,index,previousHash,time,merkleRoot,difficulty,nonce)
+        console.log(hash)
+        if(hashMatchDifficulty(hash,difficulty)){ //우리가 앞으로 만들 header의 HASH값의 앞자리 0이 몇개인가?
+            return new BlockHeader(version,index,previousHash,time,merkleRoot,difficulty,nonce)
+        }
+        nonce++
+    }
+}
+
+function hashMatchDifficulty(hash,difficulty){
+    // 0000 4개냐 1개냐
+    const hashBinary = hexToBinary(hash)
+    const prefix = '0'.repeat(difficulty)
+    return hashBinary.startsWith(prefix)
+}
+
+function createHeaderHash(version,index,previousHash,time,merkleRoot,difficulty,nonce){
+    let txt = version+index+previousHash+time+merkleRoot+difficulty+nonce
+    return CryptoJs.SHA256(txt).toString().toUpperCase()
 }
 
 function createHash(block){
