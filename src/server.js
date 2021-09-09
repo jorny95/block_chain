@@ -1,6 +1,7 @@
 const express = require('express')
 const bc = require('./block')
 const ws = require('./network')
+const wl = require('./wallet')
 const app = express()
 const bodyParser = require('body-parser')
 const port = process.env.PORT || 3000
@@ -58,6 +59,13 @@ app.get("/stop",(req,res)=>{
     res.send("server stop")
     process.exit(0)
 })
+// curl http://localhost:3000/address
+app.get(`/address`,(req,res)=>{
+    const address = wl.getPublicFromWallet()
+    res.send({address})
+})
+
+wl.initWallet()
 
 ws.wsInit()
 app.listen(port, ()=>{

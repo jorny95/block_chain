@@ -1,3 +1,29 @@
+/*
+    블록체인으로 무엇 개발한다?
+    사용자 -> 탈중앙, 데이터 신뢰성
+
+    탈중앙화 -> 네트워크를 빌려다가 사용
+    암호화폐
+    
+    - 
+    비트코인 - 네트워크 구성 모든 것을 다 만들었다. 
+    비트코인캐시 - git clone하고 이름 변경한거
+    라이트코인 - 비트코인 로직 그대로 c++로 만듬 -> 코인에 해당
+
+    이더리움 - 네트워크 구성 모든 것을 다 만들었따. 
+             - 이더리움 네트워크를 빌려다가 만든 코인들이 많습니다. 
+             - 코인 100개당 이더리움 1개
+
+    바나나톡 -> 이더리움 네크워크 코인, ERC20(이더리움 프로토콜) 기반으로 된 토큰
+    Q. 코인과 토큰의 차이점
+    코인은 자체적으로 네트워크 구성을 가지고 있는 것 
+
+    솔리디티 언어
+
+    메인넷 -> 실서버
+    테스트넷 ->
+    
+*/
 const fs = require('fs')
 const merkle = require('merkle')
 const CryptoJs = require('crypto-js')
@@ -11,7 +37,7 @@ const {hexToBinary} = require('./util')
 const BLOCK_GENERATION_INTERVAL = 10 //초
 const BLOCK_ADJUSTMENT_INTERVAL = 10 //블록이 10개가 넘을때마다 난이도를 변경시키는 것
 
-class BlockHeader {
+class BlockHeader { //header에 규칙이 있음
     constructor( version, index, previousHash, time, merkleRoot, difficulty, nonce ){
         this.version = version // 1 {version:1}
         this.index = index // 2 {version:1, index:2} // 포인트!
